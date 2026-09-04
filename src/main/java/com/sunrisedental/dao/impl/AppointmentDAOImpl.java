@@ -92,19 +92,22 @@ public class AppointmentDAOImpl implements AppointmentDAO {
      * treatment duration, not a fixed slot size.
      */
     @Override
-    public boolean hasClash(int dentistId, LocalDate date, LocalTime time, int durationMinutes) {
+    public boolean hasClash(int dentistId, LocalDate date, LocalTime time, int durationMinutes,
+                             int excludeAppointmentNumber) {
         String sql =
                 "SELECT COUNT(*) FROM appointments a JOIN treatments t ON t.treatment_id = a.treatment_id "
                 + "WHERE a.dentist_id = ? AND a.appointment_date = ? AND a.status <> 'CANCELLED' "
+                + "AND a.appointment_number <> ? "
                 + "AND a.appointment_time < ADDTIME(?, SEC_TO_TIME(? * 60)) "
                 + "AND ? < ADDTIME(a.appointment_time, SEC_TO_TIME(t.duration_minutes * 60))";
         try (Connection conn = DBConnectionManager.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, dentistId);
             stmt.setObject(2, date);
-            stmt.setTime(3, Time.valueOf(time));
-            stmt.setInt(4, durationMinutes);
-            stmt.setTime(5, Time.valueOf(time));
+            stmt.setInt(3, excludeAppointmentNumber);
+            stmt.setTime(4, Time.valueOf(time));
+            stmt.setInt(5, durationMinutes);
+            stmt.setTime(6, Time.valueOf(time));
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next() && rs.getInt(1) > 0;
             }

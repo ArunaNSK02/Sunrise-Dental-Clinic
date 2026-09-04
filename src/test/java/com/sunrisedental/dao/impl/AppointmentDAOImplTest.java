@@ -97,9 +97,9 @@ class AppointmentDAOImplTest {
     void hasClash_trueWhenRequestedWindowOverlapsAnExistingAppointment() {
         bookExistingAppointment(LocalTime.of(10, 0)); // occupies 10:00-10:30 (treatment is 30 min)
 
-        assertTrue(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 15), 30),
+        assertTrue(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 15), 30, 0),
                 "starts inside the existing appointment");
-        assertTrue(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(9, 45), 20),
+        assertTrue(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(9, 45), 20, 0),
                 "ends inside the existing appointment (9:45-10:05 overlaps 10:00-10:30)");
     }
 
@@ -107,11 +107,11 @@ class AppointmentDAOImplTest {
     void hasClash_falseWhenRequestedWindowIsAdjacentOrDisjoint() {
         bookExistingAppointment(LocalTime.of(10, 0)); // occupies 10:00-10:30
 
-        assertFalse(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 30), 30),
+        assertFalse(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 30), 30, 0),
                 "starts exactly when the existing appointment ends — back-to-back, not overlapping");
-        assertFalse(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(9, 0), 30),
+        assertFalse(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(9, 0), 30, 0),
                 "ends exactly when the existing appointment starts");
-        assertFalse(appointmentDAO.hasClash(dentistId, testDate.plusDays(1), LocalTime.of(10, 15), 30),
+        assertFalse(appointmentDAO.hasClash(dentistId, testDate.plusDays(1), LocalTime.of(10, 15), 30, 0),
                 "same time, different day");
     }
 
@@ -121,7 +121,18 @@ class AppointmentDAOImplTest {
         appointment.cancel(com.sunrisedental.model.ChangeReason.PATIENT);
         appointmentDAO.update(appointment);
 
-        assertFalse(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 15), 30));
+        assertFalse(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 15), 30, 0));
+    }
+
+    @Test
+    void hasClash_excludesTheGivenAppointmentNumber_forRescheduling() {
+        Appointment appointment = bookExistingAppointment(LocalTime.of(10, 0)); // occupies 10:00-10:30
+
+        // Without exclusion, the appointment's own slot counts as a clash against itself.
+        assertTrue(appointmentDAO.hasClash(dentistId, testDate, LocalTime.of(10, 0), 30, 0));
+        // Excluding it, moving it to overlap its own current slot is (correctly) not a clash.
+        assertFalse(appointmentDAO.hasClash(
+                dentistId, testDate, LocalTime.of(10, 0), 30, appointment.getAppointmentNumber()));
     }
 
     @Test

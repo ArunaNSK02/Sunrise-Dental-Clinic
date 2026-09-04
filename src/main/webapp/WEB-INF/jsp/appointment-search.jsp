@@ -38,7 +38,11 @@
             <tr><th>Time</th><td>${appointment.time}</td></tr>
             <tr><th>Status</th><td>${appointment.status}</td></tr>
         </table>
-        <p><a href="${pageContext.request.contextPath}/appointments/bill?number=${appointment.appointmentNumber}">Calculate &amp; Print Bill</a></p>
+        <p>
+            <a href="${pageContext.request.contextPath}/appointments/bill?number=${appointment.appointmentNumber}">Calculate &amp; Print Bill</a>
+            &middot;
+            <a href="${pageContext.request.contextPath}/appointments/manage?number=${appointment.appointmentNumber}">Cancel / Delay / Reschedule</a>
+        </p>
     </c:if>
 </body>
 </html>

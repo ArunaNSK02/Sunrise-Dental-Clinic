@@ -1,12 +1,16 @@
 name: Build and Test
 
 # Task D rubric requirement: CI/CD actually set up, running build/tests
-# on push — added early rather than retrofitted late in the project.
+# on push — added early per CLAUDE.md rather than retrofitted late.
 #
-# Note: current tests are DB-free (pure domain logic, e.g. BillTest), so
-# no MySQL service container is configured yet. Once DAO/service tests
-# that need a real database are added, this workflow will need a
-# `services: mysql:` block seeded from src/main/resources/schema.sql.
+# A real MySQL 8 service container backs this now (2026-09-04): the test
+# suite grew far past pure-domain tests into real DAO/trigger/function/
+# procedure integration tests (AppointmentDAOImplTest, UserDAOImplTest,
+# BillDAOImplTest, DoubleBookingTriggerTest, DBConnectionManagerTest), so
+# "DB-free" stopped being true and CI started failing outright without
+# one. schema.sql is loaded into it before the build step — same file
+# used to set up a local dev database, so CI and local stay in sync by
+# construction rather than by remembering to update two things.
 
 on:
   push:
@@ -17,6 +21,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sunrise_dental
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -26,6 +45,30 @@ jobs:
           java-version: '17'
           distribution: 'microsoft'
           cache: maven
+
+      - name: Ensure mysql client is available
+        run: |
+          if ! command -v mysql >/dev/null; then
+            sudo apt-get update -yqq
+            sudo apt-get install -yqq mysql-client
+          fi
+
+      - name: Wait for MySQL and load schema.sql
+        run: |
+          for i in $(seq 1 30); do
+            mysqladmin ping -h127.0.0.1 -P3306 -uroot -proot --silent && break
+            sleep 2
+          done
+          mysql -h127.0.0.1 -P3306 -uroot -proot sunrise_dental < src/main/resources/schema.sql
+
+      - name: Create db.properties (CI credentials — never committed, see .gitignore)
+        run: |
+          cat > src/main/resources/db.properties << 'EOF'
+          db.url=jdbc:mysql://127.0.0.1:3306/sunrise_dental?useSSL=false&serverTimezone=UTC
+          db.driver=com.mysql.cj.jdbc.Driver
+          db.username=root
+          db.password=root
+          EOF
 
       - name: Build and run tests
         run: mvn -B package

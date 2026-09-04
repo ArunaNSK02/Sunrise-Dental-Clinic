@@ -78,3 +78,13 @@ CREATE TABLE IF NOT EXISTS bills (
     issue_date          DATE NOT NULL,
     FOREIGN KEY (appointment_number) REFERENCES appointments(appointment_number) ON DELETE CASCADE
 );
+
+-- Single-row config table, not a class-diagram entity (decision 27):
+-- backs the flat clinic-wide consultation fee (decision 26). id is
+-- always 1 — there is exactly one row, enforced by the primary key
+-- rather than a separate "is this the active row" flag.
+CREATE TABLE IF NOT EXISTS clinic_settings (
+    id                INT PRIMARY KEY DEFAULT 1,
+    consultation_fee  DECIMAL(10, 2) NOT NULL
+);
+INSERT IGNORE INTO clinic_settings (id, consultation_fee) VALUES (1, 1000.00);

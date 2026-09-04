@@ -46,7 +46,22 @@
         </dependency>
 
         <!-- JSTL (c:if/c:forEach etc. in the JSPs) — Tomcat doesn't bundle
-             an implementation itself, so it has to ship in the WAR. -->
+             an implementation itself, so it has to ship in the WAR.
+             jakarta.servlet.jsp.jstl-api is listed explicitly, not left
+             to come in transitively: the impl artifact below marks its
+             own dependency on the API as <scope>provided</scope>, which
+             Maven does NOT propagate transitively — omitting this line
+             silently drops the JSTL API classes (ConditionalTagSupport
+             etc.) from the WAR and every c:if/c:forEach throws
+             NoClassDefFoundError at request time despite compiling fine
+             (JSPs aren't compiled by Maven, so this only surfaces when
+             Tomcat actually renders a page). Found and fixed 2026-09-04
+             after exactly that error in a real deployment. -->
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>3.0.1</version>
+        </dependency>
         <dependency>
             <groupId>org.glassfish.web</groupId>
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>

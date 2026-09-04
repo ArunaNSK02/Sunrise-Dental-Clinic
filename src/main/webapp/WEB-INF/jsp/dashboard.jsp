@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,15 @@
         <li><a href="${pageContext.request.contextPath}/appointments">Display Appointment Details (search)</a></li>
         <li><a href="${pageContext.request.contextPath}/appointments/bill">Calculate &amp; Print Bill</a></li>
         <li><a href="${pageContext.request.contextPath}/appointments/manage">Cancel / Delay / Reschedule Appointment</a></li>
-        <li>Help — coming soon</li>
+        <li><a href="${pageContext.request.contextPath}/help">Help</a></li>
+
+        <c:if test="${sessionScope.isDentist or sessionScope.isAdmin}">
+            <li><a href="${pageContext.request.contextPath}/dentist/settings">Set Daily Appointment Limit / Availability</a></li>
+        </c:if>
+        <c:if test="${sessionScope.isAdmin}">
+            <li><a href="${pageContext.request.contextPath}/staff">Manage Staff Accounts (Admin)</a></li>
+            <li><a href="${pageContext.request.contextPath}/reports">View Reports (Admin)</a></li>
+        </c:if>
     </ul>
 </body>
 </html>

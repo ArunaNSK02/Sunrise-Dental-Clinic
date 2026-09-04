@@ -2,6 +2,7 @@ package com.sunrisedental.dao;
 
 import com.sunrisedental.model.User;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -22,6 +23,16 @@ public interface UserDAO {
 
     Optional<User> findById(int userId);
 
+    /** All staff accounts, for Manage Staff Accounts (Administrator use case, decision 5). */
+    List<User> findAll();
+
+    /**
+     * Inserts a new staff account. Which concrete {@link User} subtype is
+     * passed in decides both the {@code role} discriminator and whether a
+     * {@code dentists} extension row is also created (decision 25) — the
+     * caller doesn't need to know the table shape, just which subtype to
+     * construct.
+     */
     User save(User user);
 
     void deleteById(int userId);

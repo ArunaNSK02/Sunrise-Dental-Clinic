@@ -4,6 +4,7 @@ import com.sunrisedental.dao.UserDAO;
 import com.sunrisedental.dao.impl.UserDAOImpl;
 import com.sunrisedental.model.User;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -52,5 +53,19 @@ public class UserService {
      */
     private boolean verifyPassword(User user, String suppliedPassword) {
         return user.getPassword() != null && user.getPassword().equals(suppliedPassword);
+    }
+
+    /** Manage Staff Accounts (Administrator use case, decision 5): create a staff login. */
+    public User addStaffAccount(User user) {
+        return userDAO.save(user);
+    }
+
+    /** Manage Staff Accounts (Administrator use case, decision 5): remove a staff login. */
+    public void removeStaffAccount(int userId) {
+        userDAO.deleteById(userId);
+    }
+
+    public List<User> listStaff() {
+        return userDAO.findAll();
     }
 }

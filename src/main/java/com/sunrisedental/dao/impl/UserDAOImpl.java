@@ -11,6 +11,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -59,9 +62,56 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
+    public List<User> findAll() {
+        String sql = SELECT_BASE + "ORDER BY u.role, u.full_name";
+        List<User> users = new ArrayList<>();
+        try (Connection conn = DBConnectionManager.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                users.add(mapRow(rs));
+            }
+            return users;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to list users", e);
+        }
+    }
+
+    @Override
     public User save(User user) {
-        throw new UnsupportedOperationException(
-                "Insert/update varies by concrete User subtype (role + dentist row) — not yet implemented.");
+        String role = user instanceof Administrator ? "ADMINISTRATOR"
+                : user instanceof Dentist ? "DENTIST"
+                : "RECEPTIONIST"; // Receptionist itself, since Administrator is checked first above
+
+        String sql = "INSERT INTO users (username, password, full_name, role) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DBConnectionManager.getInstance().getConnection()) {
+            int userId;
+            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, user.getUsername());
+                stmt.setString(2, user.getPassword());
+                stmt.setString(3, user.getFullName());
+                stmt.setString(4, role);
+                stmt.executeUpdate();
+                try (ResultSet keys = stmt.getGeneratedKeys()) {
+                    keys.next();
+                    userId = keys.getInt(1);
+                }
+            }
+            user.setUserId(userId);
+
+            if (user instanceof Dentist dentist) {
+                dentist.setDentistId(userId);
+                try (PreparedStatement stmt = conn.prepareStatement(
+                        "INSERT INTO dentists (dentist_id, daily_appointment_limit) VALUES (?, ?)")) {
+                    stmt.setInt(1, userId);
+                    stmt.setInt(2, dentist.getDailyAppointmentLimit());
+                    stmt.executeUpdate();
+                }
+            }
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save user: " + user.getUsername(), e);
+        }
     }
 
     @Override

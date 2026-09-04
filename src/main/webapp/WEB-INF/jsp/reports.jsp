@@ -28,12 +28,16 @@
         <button type="submit">Show</button>
     </form>
     <table border="1" cellpadding="6">
-        <tr><th>Dentist</th><th>Appointments on ${reportDate}</th></tr>
+        <tr><th>Dentist</th><th>Appointments on ${reportDate}</th><th>Revenue billed for that date</th></tr>
         <c:forEach var="load" items="${dentistLoad}">
-            <tr><td>${load.dentistName}</td><td>${load.appointmentCount}</td></tr>
+            <tr>
+                <td>${load.dentistName}</td>
+                <td>${load.appointmentCount}</td>
+                <td>Rs. <fmt:formatNumber value="${load.revenue}" minFractionDigits="2" maxFractionDigits="2"/></td>
+            </tr>
         </c:forEach>
         <c:if test="${empty dentistLoad}">
-            <tr><td colspan="2">No appointments on this date.</td></tr>
+            <tr><td colspan="3">No appointments on this date.</td></tr>
         </c:if>
     </table>
 </body>

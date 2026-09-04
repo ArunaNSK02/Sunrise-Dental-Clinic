@@ -5,11 +5,13 @@ import com.sunrisedental.dao.ReportDAO;
 import com.sunrisedental.db.DBConnectionManager;
 import com.sunrisedental.model.AppointmentStatus;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -51,23 +53,36 @@ public class ReportDAOImpl implements ReportDAO {
 
     @Override
     public List<DentistLoad> appointmentLoadByDentist(LocalDate date) {
-        String sql = "SELECT u.full_name, COUNT(*) AS c FROM appointments a "
+        String sql = "SELECT d.dentist_id, u.full_name, COUNT(*) AS c FROM appointments a "
                 + "JOIN dentists d ON d.dentist_id = a.dentist_id "
                 + "JOIN users u ON u.user_id = d.dentist_id "
                 + "WHERE a.appointment_date = ? AND a.status <> 'CANCELLED' "
-                + "GROUP BY u.full_name ORDER BY u.full_name";
+                + "GROUP BY d.dentist_id, u.full_name ORDER BY u.full_name";
         List<DentistLoad> loads = new ArrayList<>();
         try (Connection conn = DBConnectionManager.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setObject(1, date);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    loads.add(new DentistLoad(rs.getString("full_name"), rs.getInt("c")));
+                    int dentistId = rs.getInt("dentist_id");
+                    double revenue = revenueFor(conn, dentistId, date);
+                    loads.add(new DentistLoad(rs.getString("full_name"), rs.getInt("c"), revenue));
                 }
             }
             return loads;
         } catch (SQLException e) {
             throw new RuntimeException("Failed to compute appointment load for " + date, e);
+        }
+    }
+
+    /** Calls the sp_dentist_daily_revenue stored procedure (schema.sql) rather than another plain SELECT. */
+    private double revenueFor(Connection conn, int dentistId, LocalDate date) throws SQLException {
+        try (CallableStatement call = conn.prepareCall("{call sp_dentist_daily_revenue(?, ?, ?)}")) {
+            call.setInt(1, dentistId);
+            call.setObject(2, date);
+            call.registerOutParameter(3, Types.DECIMAL);
+            call.execute();
+            return call.getBigDecimal(3).doubleValue();
         }
     }
 }

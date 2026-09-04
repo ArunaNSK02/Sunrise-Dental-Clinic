@@ -27,7 +27,7 @@ class ReportServiceTest {
 
         @Override
         public List<DentistLoad> appointmentLoadByDentist(LocalDate date) {
-            return List.of(new DentistLoad("Dr. Perera", 3));
+            return List.of(new DentistLoad("Dr. Perera", 3, 9000.0));
         }
     }
 

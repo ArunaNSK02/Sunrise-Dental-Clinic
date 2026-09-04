@@ -31,15 +31,20 @@ public class BillDAOImpl implements BillDAO {
 
     @Override
     public Bill save(int appointmentNumber, Bill bill) {
+        // total_amount is computed by fn_bill_total(cost, fee) in SQL
+        // (schema.sql) rather than passing bill.getTotalAmount() from
+        // Java — the brief's core billing rule (decision 26) enforced at
+        // both tiers instead of trusted to stay in sync by coincidence.
         String sql = "INSERT INTO bills (appointment_number, treatment_cost, consultation_fee, "
-                + "total_amount, issue_date) VALUES (?, ?, ?, ?, ?)";
+                + "total_amount, issue_date) VALUES (?, ?, ?, fn_bill_total(?, ?), ?)";
         try (Connection conn = DBConnectionManager.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, appointmentNumber);
             stmt.setDouble(2, bill.getTreatmentCost());
             stmt.setDouble(3, bill.getConsultationFee());
-            stmt.setDouble(4, bill.getTotalAmount());
-            stmt.setObject(5, bill.getIssueDate());
+            stmt.setDouble(4, bill.getTreatmentCost());
+            stmt.setDouble(5, bill.getConsultationFee());
+            stmt.setObject(6, bill.getIssueDate());
             stmt.executeUpdate();
             try (ResultSet keys = stmt.getGeneratedKeys()) {
                 if (keys.next()) {

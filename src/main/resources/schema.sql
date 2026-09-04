@@ -88,3 +88,106 @@ CREATE TABLE IF NOT EXISTS clinic_settings (
     consultation_fee  DECIMAL(10, 2) NOT NULL
 );
 INSERT IGNORE INTO clinic_settings (id, consultation_fee) VALUES (1, 1000.00);
+
+-- ============================================================
+-- Advanced DB features (rubric: stored procedures/functions/triggers
+-- enforcing business rules) — defense in depth alongside the
+-- application-level checks in AppointmentService/AppointmentDAOImpl
+-- (decision 24, entries 61-63): the Java layer is the primary,
+-- user-facing check (it can show a proper "unavailable" message
+-- instead of a raw SQL error); these exist so the double-booking rule
+-- holds even against a write that bypasses the DAO layer entirely
+-- (a raw SQL script, another application, a DBA typo).
+-- ============================================================
+
+DELIMITER $$
+
+-- Trigger 1/2: block an INSERT that would double-book a dentist.
+-- Mirrors AppointmentDAOImpl.hasClash()'s overlap test in SQL:
+-- [existingStart, existingStart+existingDuration) overlaps
+-- [NEW.time, NEW.time+NEWDuration) exactly when existingStart <
+-- NEW.end AND NEW.time < existingEnd.
+DROP TRIGGER IF EXISTS trg_appointments_no_double_booking_insert$$
+CREATE TRIGGER trg_appointments_no_double_booking_insert
+BEFORE INSERT ON appointments
+FOR EACH ROW
+BEGIN
+    DECLARE v_conflicts INT;
+    IF NEW.status <> 'CANCELLED' THEN
+        SELECT COUNT(*) INTO v_conflicts
+        FROM appointments a
+        JOIN treatments t ON t.treatment_id = a.treatment_id
+        JOIN treatments nt ON nt.treatment_id = NEW.treatment_id
+        WHERE a.dentist_id = NEW.dentist_id
+          AND a.appointment_date = NEW.appointment_date
+          AND a.status <> 'CANCELLED'
+          AND a.appointment_time < ADDTIME(NEW.appointment_time, SEC_TO_TIME(nt.duration_minutes * 60))
+          AND NEW.appointment_time < ADDTIME(a.appointment_time, SEC_TO_TIME(t.duration_minutes * 60));
+
+        IF v_conflicts > 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Double-booking guard: this dentist already has an overlapping appointment at that time.';
+        END IF;
+    END IF;
+END$$
+
+-- Trigger 2/2: same guard for an UPDATE that moves an appointment
+-- (Reschedule Appointment) — only runs the check when the date/time/
+-- dentist actually changed, and excludes the row's own current slot
+-- from the conflict search (the Java-side equivalent is decision 28's
+-- excludeAppointmentNumber parameter).
+DROP TRIGGER IF EXISTS trg_appointments_no_double_booking_update$$
+CREATE TRIGGER trg_appointments_no_double_booking_update
+BEFORE UPDATE ON appointments
+FOR EACH ROW
+BEGIN
+    DECLARE v_conflicts INT;
+    IF NEW.status <> 'CANCELLED'
+       AND (NEW.appointment_date <> OLD.appointment_date
+            OR NEW.appointment_time <> OLD.appointment_time
+            OR NEW.dentist_id <> OLD.dentist_id) THEN
+        SELECT COUNT(*) INTO v_conflicts
+        FROM appointments a
+        JOIN treatments t ON t.treatment_id = a.treatment_id
+        JOIN treatments nt ON nt.treatment_id = NEW.treatment_id
+        WHERE a.dentist_id = NEW.dentist_id
+          AND a.appointment_date = NEW.appointment_date
+          AND a.status <> 'CANCELLED'
+          AND a.appointment_number <> NEW.appointment_number
+          AND a.appointment_time < ADDTIME(NEW.appointment_time, SEC_TO_TIME(nt.duration_minutes * 60))
+          AND NEW.appointment_time < ADDTIME(a.appointment_time, SEC_TO_TIME(t.duration_minutes * 60));
+
+        IF v_conflicts > 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Double-booking guard: this dentist already has an overlapping appointment at that time.';
+        END IF;
+    END IF;
+END$$
+
+-- Function: total = treatment cost + consultation fee (the brief's core
+-- billing rule, decision 26), callable directly from SQL. BillDAOImpl
+-- uses this in its INSERT rather than only computing the total in Java,
+-- so the rule is enforced at both tiers, not duplicated by coincidence.
+DROP FUNCTION IF EXISTS fn_bill_total$$
+CREATE FUNCTION fn_bill_total(p_treatment_cost DECIMAL(10,2), p_consultation_fee DECIMAL(10,2))
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+BEGIN
+    RETURN p_treatment_cost + p_consultation_fee;
+END$$
+
+-- Stored procedure: revenue billed for one dentist on one date — backs
+-- an extra column on View Reports' per-dentist load table (Administrator
+-- use case, decision 5), called via a JDBC CallableStatement from
+-- ReportDAOImpl rather than duplicated as another aggregate SELECT in
+-- Java, to actually demonstrate a procedure in use, not just present.
+DROP PROCEDURE IF EXISTS sp_dentist_daily_revenue$$
+CREATE PROCEDURE sp_dentist_daily_revenue(IN p_dentist_id INT, IN p_date DATE, OUT p_revenue DECIMAL(10,2))
+BEGIN
+    SELECT COALESCE(SUM(b.total_amount), 0) INTO p_revenue
+    FROM bills b
+    JOIN appointments a ON a.appointment_number = b.appointment_number
+    WHERE a.dentist_id = p_dentist_id AND a.appointment_date = p_date;
+END$$
+
+DELIMITER ;

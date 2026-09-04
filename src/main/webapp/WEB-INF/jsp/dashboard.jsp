@@ -13,7 +13,7 @@
     <ul>
         <li><a href="${pageContext.request.contextPath}/appointments/new">Register New Appointment</a></li>
         <li><a href="${pageContext.request.contextPath}/appointments">Display Appointment Details (search)</a></li>
-        <li>Calculate &amp; Print Bill — coming soon</li>
+        <li><a href="${pageContext.request.contextPath}/appointments/bill">Calculate &amp; Print Bill</a></li>
         <li>Help — coming soon</li>
     </ul>
 </body>

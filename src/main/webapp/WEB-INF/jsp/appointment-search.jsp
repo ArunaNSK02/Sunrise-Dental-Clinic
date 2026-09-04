@@ -38,6 +38,7 @@
             <tr><th>Time</th><td>${appointment.time}</td></tr>
             <tr><th>Status</th><td>${appointment.status}</td></tr>
         </table>
+        <p><a href="${pageContext.request.contextPath}/appointments/bill?number=${appointment.appointmentNumber}">Calculate &amp; Print Bill</a></p>
     </c:if>
 </body>
 </html>

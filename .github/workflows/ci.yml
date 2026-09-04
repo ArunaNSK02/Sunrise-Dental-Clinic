@@ -1,0 +1,31 @@
+name: Build and Test
+
+# Task D rubric requirement: CI/CD actually set up, running build/tests
+# on push — added early rather than retrofitted late in the project.
+#
+# Note: current tests are DB-free (pure domain logic, e.g. BillTest), so
+# no MySQL service container is configured yet. Once DAO/service tests
+# that need a real database are added, this workflow will need a
+# `services: mysql:` block seeded from src/main/resources/schema.sql.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'microsoft'
+          cache: maven
+
+      - name: Build and run tests
+        run: mvn -B package

@@ -45,6 +45,14 @@
             <version>${mysql.connector.version}</version>
         </dependency>
 
+        <!-- JSTL (c:if/c:forEach etc. in the JSPs) — Tomcat doesn't bundle
+             an implementation itself, so it has to ship in the WAR. -->
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
         <!-- JUnit 5 (Task C automated testing) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

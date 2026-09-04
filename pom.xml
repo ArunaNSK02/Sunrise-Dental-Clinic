@@ -45,6 +45,15 @@
             <version>${mysql.connector.version}</version>
         </dependency>
 
+        <!-- Password hashing (UserService) — replaces the plain-text
+             comparison placeholder flagged since the Task B scaffold
+             session (DESIGN.md's deviations log). -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
         <!-- JSTL (c:if/c:forEach etc. in the JSPs) — Tomcat doesn't bundle
              an implementation itself, so it has to ship in the WAR.
              jakarta.servlet.jsp.jstl-api is listed explicitly, not left

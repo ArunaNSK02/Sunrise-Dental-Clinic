@@ -4,6 +4,7 @@ import com.sunrisedental.dao.UserDAO;
 import com.sunrisedental.model.Receptionist;
 import com.sunrisedental.model.User;
 import org.junit.jupiter.api.Test;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +53,7 @@ class UserServiceTest {
     @Test
     void login_succeedsWithCorrectCredentials() {
         StubUserDAO dao = new StubUserDAO();
-        dao.users.add(new Receptionist(1, "reception", "secret", "Nadeesha Fernando"));
+        dao.users.add(new Receptionist(1, "reception", BCrypt.hashpw("secret", BCrypt.gensalt()), "Nadeesha Fernando"));
         UserService service = new UserService(dao);
 
         Optional<User> result = service.login("reception", "secret");
@@ -63,21 +64,32 @@ class UserServiceTest {
     @Test
     void login_failsWithWrongPassword() {
         StubUserDAO dao = new StubUserDAO();
-        dao.users.add(new Receptionist(1, "reception", "secret", "Nadeesha Fernando"));
+        dao.users.add(new Receptionist(1, "reception", BCrypt.hashpw("secret", BCrypt.gensalt()), "Nadeesha Fernando"));
         UserService service = new UserService(dao);
 
         assertFalse(service.login("reception", "wrong").isPresent());
     }
 
     @Test
-    void addStaffAccount_delegatesToUserDAOSave() {
+    void login_failsGracefullyOnALegacyUnhashedPasswordRatherThanThrowing() {
+        StubUserDAO dao = new StubUserDAO();
+        dao.users.add(new Receptionist(1, "reception", "plaintext-not-a-bcrypt-hash", "Nadeesha Fernando"));
+        UserService service = new UserService(dao);
+
+        assertFalse(service.login("reception", "plaintext-not-a-bcrypt-hash").isPresent());
+    }
+
+    @Test
+    void addStaffAccount_hashesThePasswordBeforeSaving() {
         StubUserDAO dao = new StubUserDAO();
         UserService service = new UserService(dao);
 
-        User saved = service.addStaffAccount(new Receptionist(0, "new.staff", "x", "New Staff"));
+        User saved = service.addStaffAccount(new Receptionist(0, "new.staff", "plaintext123", "New Staff"));
 
         assertEquals(1, dao.users.size());
         assertTrue(saved.getUserId() > 0);
+        assertFalse("plaintext123".equals(saved.getPassword()), "password must not be stored as plain text");
+        assertTrue(BCrypt.checkpw("plaintext123", saved.getPassword()));
     }
 
     @Test

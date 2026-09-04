@@ -3,6 +3,7 @@ package com.sunrisedental.service;
 import com.sunrisedental.dao.UserDAO;
 import com.sunrisedental.dao.impl.UserDAOImpl;
 import com.sunrisedental.model.User;
+import org.mindrot.jbcrypt.BCrypt;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,19 +45,35 @@ public class UserService {
     }
 
     /**
-     * Self-message in sequence diagram 3.1 — plain equality for now.
+     * Self-message in sequence diagram 3.1. Uses {@link BCrypt#checkpw}
+     * against the salted hash stored in {@code users.password} — plain-
+     * text comparison was a placeholder flagged since the Task B scaffold
+     * session (DESIGN.md's deviations log), now replaced for real.
      *
-     * <p>Storing and comparing raw passwords is a placeholder, not a
-     * design decision: production code must hash passwords (e.g. BCrypt)
-     * before persisting or comparing them. Flagged as a known gap for the
-     * report rather than left unmentioned.</p>
+     * <p>Guards against a malformed/legacy (pre-hashing) stored value
+     * rather than letting {@code BCrypt.checkpw} throw
+     * {@code IllegalArgumentException} out of a login attempt — a bad
+     * hash should mean "this login fails", not a 500 error.</p>
      */
     private boolean verifyPassword(User user, String suppliedPassword) {
-        return user.getPassword() != null && user.getPassword().equals(suppliedPassword);
+        if (user.getPassword() == null) {
+            return false;
+        }
+        try {
+            return BCrypt.checkpw(suppliedPassword, user.getPassword());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
-    /** Manage Staff Accounts (Administrator use case, decision 5): create a staff login. */
+    /**
+     * Manage Staff Accounts (Administrator use case, decision 5): create a
+     * staff login. Hashes the supplied plain-text password before it ever
+     * reaches the DAO/database — {@code UserDAOImpl.save()} just persists
+     * whatever string it's given, so hashing belongs here, not there.
+     */
     public User addStaffAccount(User user) {
+        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt()));
         return userDAO.save(user);
     }
 

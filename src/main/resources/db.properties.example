@@ -1,0 +1,9 @@
+# Database connection settings for the data access tier.
+# Local dev target: MySQL 8 (Windows service "MySQL80"), per CLAUDE.md's
+# confirmed environment. Update the username/password to match your local
+# MySQL root/user account before running against a real database — these
+# are placeholders, not real credentials.
+db.url=jdbc:mysql://localhost:3306/sunrise_dental?useSSL=false&serverTimezone=UTC
+db.driver=com.mysql.cj.jdbc.Driver
+db.username=root
+db.password=changeme

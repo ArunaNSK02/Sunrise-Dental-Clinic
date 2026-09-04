@@ -19,7 +19,9 @@ import java.io.IOException;
  * a {@code loggedInUser} session attribute is redirected to {@code /login}
  * instead of reaching the servlet.
  */
-@WebFilter(urlPatterns = {"/dashboard", "/appointments/*"})
+@WebFilter(urlPatterns = {
+        "/dashboard", "/appointments/*", "/help", "/staff", "/staff/*", "/reports", "/dentist/*"
+})
 public class AuthenticationFilter implements jakarta.servlet.Filter {
 
     @Override

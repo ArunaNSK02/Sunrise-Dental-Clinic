@@ -1,5 +1,7 @@
 package com.sunrisedental.web;
 
+import com.sunrisedental.model.Administrator;
+import com.sunrisedental.model.Dentist;
 import com.sunrisedental.model.User;
 import com.sunrisedental.service.UserService;
 
@@ -42,8 +44,14 @@ public class LoginServlet extends HttpServlet {
         Optional<User> authenticated = userService.login(username, password);
 
         if (authenticated.isPresent()) {
+            User user = authenticated.get();
             HttpSession session = req.getSession(true);
-            session.setAttribute("loggedInUser", authenticated.get());
+            session.setAttribute("loggedInUser", user);
+            // Plain booleans rather than relying on JSP EL's getClass()
+            // reflection trick to branch menu visibility per role —
+            // simpler and more obviously correct in the JSPs.
+            session.setAttribute("isAdmin", user instanceof Administrator);
+            session.setAttribute("isDentist", user instanceof Dentist);
             resp.sendRedirect(req.getContextPath() + "/dashboard");
         } else {
             req.setAttribute("error", "Invalid username or password.");

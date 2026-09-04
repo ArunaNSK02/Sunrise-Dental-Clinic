@@ -115,13 +115,15 @@ public class DentistDAOImpl implements DentistDAO {
     }
 
     @Override
-    public int countAppointmentsOnDate(int dentistId, LocalDate date) {
+    public int countAppointmentsOnDate(int dentistId, LocalDate date, int excludeAppointmentNumber) {
         String sql = "SELECT COUNT(*) FROM appointments "
-                + "WHERE dentist_id = ? AND appointment_date = ? AND status <> 'CANCELLED'";
+                + "WHERE dentist_id = ? AND appointment_date = ? AND status <> 'CANCELLED' "
+                + "AND appointment_number <> ?";
         try (Connection conn = DBConnectionManager.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, dentistId);
             stmt.setObject(2, date);
+            stmt.setInt(3, excludeAppointmentNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next() ? rs.getInt(1) : 0;
             }

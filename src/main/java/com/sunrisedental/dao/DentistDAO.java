@@ -26,6 +26,14 @@ public interface DentistDAO {
 
     List<AvailabilityBlock> findAvailabilityBlocks(int dentistId);
 
-    /** How many appointments this dentist already has on the given date — feeds the daily-limit check. */
-    int countAppointmentsOnDate(int dentistId, LocalDate date);
+    /**
+     * How many appointments this dentist already has on the given date —
+     * feeds the daily-limit check. {@code excludeAppointmentNumber}: pass
+     * {@code 0} for a fresh booking, or the appointment being moved for
+     * Reschedule Appointment — a same-day time change shouldn't count
+     * against the limit as if it were a brand new appointment (see
+     * {@link AppointmentDAO#hasClash} for the matching reasoning on the
+     * clash test).
+     */
+    int countAppointmentsOnDate(int dentistId, LocalDate date, int excludeAppointmentNumber);
 }

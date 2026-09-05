@@ -1,44 +1,45 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Reports — Sunrise Dental Clinic</title>
-</head>
-<body>
+<%-- pageEncoding declared here, not just in the included header.jsp — see
+     manage-appointment.jsp's comment on the same line for why. --%>
+<%@ page pageEncoding="UTF-8" %>
+<% request.setAttribute("pageTitle", "Reports — Sunrise Dental Clinic"); %>
+<%@ include file="/WEB-INF/jspf/header.jsp" %>
     <p><a href="${pageContext.request.contextPath}/dashboard">&larr; Dashboard</a></p>
     <h1>Clinic Reports</h1>
 
-    <h2>Appointments by status (clinic-wide, all time)</h2>
-    <table border="1" cellpadding="6">
-        <tr><th>Status</th><th>Count</th></tr>
+    <div class="stat-grid">
+        <div class="stat-tile">
+            <div class="value">Rs. <fmt:formatNumber value="${totalRevenue}" minFractionDigits="0" maxFractionDigits="0"/></div>
+            <div class="label">Total revenue billed</div>
+        </div>
         <c:forEach var="entry" items="${statusCounts}">
-            <tr><td>${entry.key}</td><td>${entry.value}</td></tr>
+            <div class="stat-tile">
+                <div class="value">${entry.value}</div>
+                <div class="label">${entry.key}</div>
+            </div>
         </c:forEach>
-    </table>
-
-    <h2>Total revenue billed</h2>
-    <p>Rs. <fmt:formatNumber value="${totalRevenue}" minFractionDigits="2" maxFractionDigits="2"/></p>
+    </div>
 
     <h2>Appointment load by dentist</h2>
-    <form method="get" action="${pageContext.request.contextPath}/reports">
-        <label>Date: <input type="date" name="date" value="${reportDate}"></label>
-        <button type="submit">Show</button>
-    </form>
-    <table border="1" cellpadding="6">
+    <div class="card">
+        <form method="get" action="${pageContext.request.contextPath}/reports">
+            <label>Date
+                <input type="date" name="date" value="${reportDate}">
+            </label>
+            <button type="submit">Show</button>
+        </form>
+    </div>
+
+    <table>
         <tr><th>Dentist</th><th>Appointments on ${reportDate}</th><th>Revenue billed for that date</th></tr>
         <c:forEach var="load" items="${dentistLoad}">
             <tr>
-                <td>${load.dentistName}</td>
+                <td>${fn:escapeXml(load.dentistName)}</td>
                 <td>${load.appointmentCount}</td>
                 <td>Rs. <fmt:formatNumber value="${load.revenue}" minFractionDigits="2" maxFractionDigits="2"/></td>
             </tr>
         </c:forEach>
         <c:if test="${empty dentistLoad}">
-            <tr><td colspan="3">No appointments on this date.</td></tr>
+            <tr><td colspan="3" class="muted">No appointments on this date.</td></tr>
         </c:if>
     </table>
-</body>
-</html>
+<%@ include file="/WEB-INF/jspf/footer.jsp" %>

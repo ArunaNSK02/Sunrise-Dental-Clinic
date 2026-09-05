@@ -1,30 +1,44 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard — Sunrise Dental Clinic</title>
-</head>
-<body>
-    <h1>Sunrise Dental Clinic</h1>
-    <p>Welcome, ${sessionScope.loggedInUser.fullName}.
-       <a href="${pageContext.request.contextPath}/logout">Log out</a></p>
+<%-- pageEncoding declared here, not just in the included header.jsp — see
+     manage-appointment.jsp's comment on the same line for why. --%>
+<%@ page pageEncoding="UTF-8" %>
+<% request.setAttribute("pageTitle", "Dashboard — Sunrise Dental Clinic"); %>
+<%@ include file="/WEB-INF/jspf/header.jsp" %>
+    <h1>Welcome, ${fn:escapeXml(sessionScope.loggedInUser.fullName)}</h1>
 
-    <ul>
-        <li><a href="${pageContext.request.contextPath}/appointments/new">Register New Appointment</a></li>
-        <li><a href="${pageContext.request.contextPath}/appointments">Display Appointment Details (search)</a></li>
-        <li><a href="${pageContext.request.contextPath}/appointments/bill">Calculate &amp; Print Bill</a></li>
-        <li><a href="${pageContext.request.contextPath}/appointments/manage">Cancel / Delay / Reschedule Appointment</a></li>
-        <li><a href="${pageContext.request.contextPath}/help">Help</a></li>
+    <%-- Register New Appointment is never a Dentist's action (decision 8) — see header.jsp's nav for the same rule. --%>
+    <c:if test="${not sessionScope.isDentist}">
+        <div class="actions" style="margin-bottom:24px;">
+            <a class="btn" href="${pageContext.request.contextPath}/appointments/new">+ Register New Appointment</a>
+        </div>
+    </c:if>
 
-        <c:if test="${sessionScope.isDentist or sessionScope.isAdmin}">
-            <li><a href="${pageContext.request.contextPath}/dentist/settings">Set Daily Appointment Limit / Availability</a></li>
+    <h2 style="margin-top:0;">
+        <c:choose>
+            <c:when test="${sessionScope.isDentist}">Your schedule — ${todayDate}</c:when>
+            <c:otherwise>Today's schedule — ${todayDate}</c:otherwise>
+        </c:choose>
+    </h2>
+
+    <%-- Each row links to Manage — the only path a Dentist has to their own
+         appointments, since they don't get standalone Search (decision 6/14:
+         Dentist only reaches Search Appointment through Record Appointment
+         Delay's own <<include>>, not as a general lookup). Useful for
+         Receptionist/Administrator too, not just a Dentist workaround. --%>
+    <table>
+        <tr>
+            <th>Time</th><th>Patient</th><th>Dentist</th><th>Treatment</th><th>Status</th>
+        </tr>
+        <c:forEach var="appt" items="${todaysAppointments}">
+            <tr onclick="location.href='${pageContext.request.contextPath}/appointments/manage?number=${appt.appointmentNumber}'" style="cursor:pointer;">
+                <td>${appt.time}</td>
+                <td>${fn:escapeXml(appt.patient.name)}</td>
+                <td>${fn:escapeXml(appt.dentist.fullName)}</td>
+                <td>${fn:escapeXml(appt.treatment.name)}</td>
+                <td><span class="badge status-${fn:toLowerCase(appt.status)}">${appt.status}</span></td>
+            </tr>
+        </c:forEach>
+        <c:if test="${empty todaysAppointments}">
+            <tr><td colspan="5" class="muted">Nothing scheduled today.</td></tr>
         </c:if>
-        <c:if test="${sessionScope.isAdmin}">
-            <li><a href="${pageContext.request.contextPath}/staff">Manage Staff Accounts (Admin)</a></li>
-            <li><a href="${pageContext.request.contextPath}/reports">View Reports (Admin)</a></li>
-        </c:if>
-    </ul>
-</body>
-</html>
+    </table>
+<%@ include file="/WEB-INF/jspf/footer.jsp" %>

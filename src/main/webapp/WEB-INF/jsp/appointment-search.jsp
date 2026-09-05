@@ -1,48 +1,48 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Display Appointment Details — Sunrise Dental Clinic</title>
-</head>
-<body>
+<%-- pageEncoding declared here, not just in the included header.jsp — see
+     manage-appointment.jsp's comment on the same line for why. --%>
+<%@ page pageEncoding="UTF-8" %>
+<% request.setAttribute("pageTitle", "Display Appointment Details — Sunrise Dental Clinic"); %>
+<%@ include file="/WEB-INF/jspf/header.jsp" %>
     <p><a href="${pageContext.request.contextPath}/dashboard">&larr; Dashboard</a></p>
     <h1>Display Appointment Details</h1>
 
-    <form method="get" action="${pageContext.request.contextPath}/appointments">
-        <label>Appointment number: <input type="number" name="number" value="${param.number}" required></label>
-        <button type="submit">Search</button>
-    </form>
+    <div class="card">
+        <form method="get" action="${pageContext.request.contextPath}/appointments">
+            <label>Appointment number
+                <input type="number" name="number" value="${param.number}" required>
+            </label>
+            <button type="submit">Search</button>
+        </form>
+    </div>
 
     <c:if test="${not empty error}">
-        <p style="color:red;">${error}</p>
+        <div class="alert alert-error">${error}</div>
     </c:if>
 
     <c:if test="${not empty notFoundNumber}">
-        <p style="color:red;">No appointment found with number ${notFoundNumber}.</p>
+        <div class="alert alert-error">No appointment found with number ${notFoundNumber}.</div>
     </c:if>
 
     <c:if test="${not empty appointment}">
         <c:if test="${appointment.appointmentNumber == param.number}">
-            <p style="color:green;">Appointment booked successfully.</p>
+            <div class="alert alert-success">Appointment booked successfully.</div>
         </c:if>
-        <table border="1" cellpadding="6">
-            <tr><th>Appointment Number</th><td>${appointment.appointmentNumber}</td></tr>
-            <tr><th>Patient</th><td>${appointment.patient.name}</td></tr>
-            <tr><th>Address</th><td>${appointment.patient.address}</td></tr>
-            <tr><th>Contact Number</th><td>${appointment.patient.contactNumber}</td></tr>
-            <tr><th>Dentist</th><td>${appointment.dentist.fullName}</td></tr>
-            <tr><th>Treatment</th><td>${appointment.treatment.name}</td></tr>
-            <tr><th>Date</th><td>${appointment.date}</td></tr>
-            <tr><th>Time</th><td>${appointment.time}</td></tr>
-            <tr><th>Status</th><td>${appointment.status}</td></tr>
-        </table>
-        <p>
-            <a href="${pageContext.request.contextPath}/appointments/bill?number=${appointment.appointmentNumber}">Calculate &amp; Print Bill</a>
-            &middot;
-            <a href="${pageContext.request.contextPath}/appointments/manage?number=${appointment.appointmentNumber}">Cancel / Delay / Reschedule</a>
-        </p>
+        <div class="card">
+            <table>
+                <tr><th>Appointment Number</th><td>${appointment.appointmentNumber}</td></tr>
+                <tr><th>Patient</th><td>${fn:escapeXml(appointment.patient.name)}</td></tr>
+                <tr><th>Address</th><td>${fn:escapeXml(appointment.patient.address)}</td></tr>
+                <tr><th>Contact Number</th><td>${fn:escapeXml(appointment.patient.contactNumber)}</td></tr>
+                <tr><th>Dentist</th><td>${fn:escapeXml(appointment.dentist.fullName)}</td></tr>
+                <tr><th>Treatment</th><td>${fn:escapeXml(appointment.treatment.name)}</td></tr>
+                <tr><th>Date</th><td>${appointment.date}</td></tr>
+                <tr><th>Time</th><td>${appointment.time}</td></tr>
+                <tr><th>Status</th><td><span class="badge status-${fn:toLowerCase(appointment.status)}">${appointment.status}</span></td></tr>
+            </table>
+            <div class="actions">
+                <a class="btn" href="${pageContext.request.contextPath}/appointments/bill?number=${appointment.appointmentNumber}">Calculate &amp; Print Bill</a>
+                <a class="btn secondary" href="${pageContext.request.contextPath}/appointments/manage?number=${appointment.appointmentNumber}">Cancel / Delay / Reschedule</a>
+            </div>
+        </div>
     </c:if>
-</body>
-</html>
+<%@ include file="/WEB-INF/jspf/footer.jsp" %>

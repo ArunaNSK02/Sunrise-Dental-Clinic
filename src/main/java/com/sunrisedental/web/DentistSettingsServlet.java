@@ -30,6 +30,9 @@ public class DentistSettingsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!RoleGuard.requireDentistOrAdmin(req, resp)) {
+            return;
+        }
         Integer dentistId = resolveDentistId(req);
         if (dentistId == null) {
             req.setAttribute("dentists", dentistService.findAll()); // Admin: show the picker
@@ -41,6 +44,9 @@ public class DentistSettingsServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!RoleGuard.requireDentistOrAdmin(req, resp)) {
+            return;
+        }
         Integer dentistId = resolveDentistId(req);
         if (dentistId == null) {
             resp.sendRedirect(req.getContextPath() + "/dentist/settings");
@@ -51,13 +57,22 @@ public class DentistSettingsServlet extends HttpServlet {
         try {
             String action = req.getParameter("action");
             if ("limit".equals(action)) {
-                dentistService.setDailyAppointmentLimit(dentistId, Integer.parseInt(req.getParameter("limit")));
+                int limit = Integer.parseInt(req.getParameter("limit"));
+                if (limit <= 0) {
+                    throw new IllegalArgumentException("Daily appointment limit must be greater than zero.");
+                }
+                dentistService.setDailyAppointmentLimit(dentistId, limit);
             } else if ("availability".equals(action)) {
                 LocalDateTime start = LocalDateTime.parse(req.getParameter("start"));
                 LocalDateTime end = LocalDateTime.parse(req.getParameter("end"));
+                if (!end.isAfter(start)) {
+                    throw new IllegalArgumentException("The end of an unavailable period must be after its start.");
+                }
                 String reason = req.getParameter("reason");
                 dentistService.setAvailability(dentistId, new AvailabilityBlock(0, start, end, reason));
             }
+        } catch (IllegalArgumentException e) {
+            error = e.getMessage() != null ? e.getMessage() : "Please fill in all fields correctly.";
         } catch (RuntimeException e) {
             error = "Please fill in all fields correctly.";
         }

@@ -18,10 +18,8 @@ import java.util.List;
 /**
  * Presentation tier for Manage Staff Accounts (Administrator-only use
  * case, decision 5). {@link AuthenticationFilter} already guards this
- * path for "is someone logged in" — the extra role check here is
- * "is that someone an Administrator", which is specific to this one
- * servlet rather than a general cross-cutting concern, so it's inline
- * rather than a second filter.
+ * path for "is someone logged in" — {@link RoleGuard#requireAdmin} adds
+ * "is that someone an Administrator" on top.
  */
 @WebServlet(name = "StaffAccountServlet", urlPatterns = {"/staff"})
 public class StaffAccountServlet extends HttpServlet {
@@ -30,7 +28,7 @@ public class StaffAccountServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!requireAdmin(req, resp)) {
+        if (!RoleGuard.requireAdmin(req, resp)) {
             return;
         }
         showStaffList(req, resp, null);
@@ -38,7 +36,7 @@ public class StaffAccountServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!requireAdmin(req, resp)) {
+        if (!RoleGuard.requireAdmin(req, resp)) {
             return;
         }
 
@@ -52,6 +50,8 @@ public class StaffAccountServlet extends HttpServlet {
                 String role = req.getParameter("role");
                 if (isBlank(username) || isBlank(password) || isBlank(fullName) || isBlank(role)) {
                     error = "Username, password, full name and role are all required.";
+                } else if (password.length() < 6) {
+                    error = "Password must be at least 6 characters.";
                 } else {
                     User newUser = switch (role) {
                         case "ADMINISTRATOR" -> new Administrator(0, username, password, fullName);
@@ -66,7 +66,20 @@ public class StaffAccountServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             error = "Invalid user id.";
         } catch (RuntimeException e) {
-            error = "That username is already taken."; // most likely cause: users.username UNIQUE constraint
+            // Branch-aware: this single catch used to always say "already
+            // taken" regardless of which action failed — harmless for add
+            // (its only realistic RuntimeException is the users.username
+            // UNIQUE constraint), but actively misleading for remove, whose
+            // realistic failure is a foreign-key constraint instead (e.g.
+            // removing a Dentist who still has a dentists/appointments row
+            // pointing at their user id). Found via the end-to-end UI test
+            // 2026-09-05: a remove attempt that should have been rejected
+            // as "still referenced" instead told the admin the *username*
+            // was taken, which isn't even true and isn't actionable.
+            error = "add".equals(action)
+                    ? "That username is already taken."
+                    : "Could not remove this account — it may still be referenced elsewhere "
+                            + "(e.g. a dentist with existing appointments).";
         }
         showStaffList(req, resp, error);
     }
@@ -88,15 +101,6 @@ public class StaffAccountServlet extends HttpServlet {
             req.setAttribute("error", error);
         }
         req.getRequestDispatcher("/WEB-INF/jsp/staff-accounts.jsp").forward(req, resp);
-    }
-
-    private boolean requireAdmin(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        Object isAdmin = req.getSession().getAttribute("isAdmin");
-        if (!Boolean.TRUE.equals(isAdmin)) {
-            resp.sendRedirect(req.getContextPath() + "/dashboard");
-            return false;
-        }
-        return true;
     }
 
     private boolean isBlank(String value) {

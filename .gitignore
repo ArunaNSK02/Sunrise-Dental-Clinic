@@ -1,0 +1,16 @@
+# Assessment brief
+icbtcis6003s3sriwrit1may-2026main2025-26_6a59d39065132_.pdf
+
+#docs files
+docs/
+
+# Maven build output
+target/
+
+# Real local DB credentials — never commit these. Copy db.properties.example
+# to db.properties and fill in your local MySQL username/password.
+src/main/resources/db.properties
+
+/scripts
+
+/github workflow logs/

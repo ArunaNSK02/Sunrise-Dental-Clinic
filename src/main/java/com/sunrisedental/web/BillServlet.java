@@ -32,6 +32,9 @@ public class BillServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!RoleGuard.requireNotDentist(req, resp)) {
+            return;
+        }
         String numberParam = req.getParameter("number");
         if (numberParam == null || numberParam.isBlank()) {
             req.getRequestDispatcher("/WEB-INF/jsp/bill.jsp").forward(req, resp);

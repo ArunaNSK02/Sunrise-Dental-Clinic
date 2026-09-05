@@ -89,6 +89,23 @@ CREATE TABLE IF NOT EXISTS clinic_settings (
 );
 INSERT IGNORE INTO clinic_settings (id, consultation_fee) VALUES (1, 1000.00);
 
+-- Notification audit trail (rubric: "complex functionality — e.g. email
+-- alerts, SMS notifications"). appointment_number is nullable and has no
+-- FK/cascade: a notification is a record that something was sent, which
+-- should survive even if the appointment it was about is later deleted
+-- (appointments never actually get hard-deleted by this app, but the
+-- audit trail shouldn't silently vanish if that ever changed).
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id     INT AUTO_INCREMENT PRIMARY KEY,
+    appointment_number   INT,
+    patient_id           INT NOT NULL,
+    channel              VARCHAR(20) NOT NULL,
+    recipient            VARCHAR(50) NOT NULL,
+    message              VARCHAR(500) NOT NULL,
+    sent_at              DATETIME NOT NULL,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+);
+
 -- ============================================================
 -- Advanced DB features (rubric: stored procedures/functions/triggers
 -- enforcing business rules) — defense in depth alongside the

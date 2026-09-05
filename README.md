@@ -41,3 +41,6 @@ docs/                  DESIGN.md, HANDOFF.md, UML sources
 3. Build: `mvn package` — produces `target/sunrise-dental-clinic.war`.
 4. Deploy the WAR to Apache Tomcat 11 (e.g. drop it in `webapps/`), or
    run `mvn test` to run the automated test suite on its own.
+
+## Report File
+st20286243 CIS6003 WRIT1.pdf

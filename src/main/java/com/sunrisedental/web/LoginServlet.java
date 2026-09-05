@@ -46,6 +46,13 @@ public class LoginServlet extends HttpServlet {
         if (authenticated.isPresent()) {
             User user = authenticated.get();
             HttpSession session = req.getSession(true);
+            // Session fixation defense: if a session already existed before
+            // login (e.g. an attacker got a victim to visit a link carrying
+            // a known session id), swap in a fresh id now that the user is
+            // authenticated, rather than letting a pre-login id become a
+            // valid authenticated one. changeSessionId() keeps the same
+            // session object/attributes, just gives it a new id.
+            req.changeSessionId();
             session.setAttribute("loggedInUser", user);
             // Plain booleans rather than relying on JSP EL's getClass()
             // reflection trick to branch menu visibility per role —

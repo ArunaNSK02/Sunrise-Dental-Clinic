@@ -83,6 +83,25 @@ public class AppointmentDAOImpl implements AppointmentDAO {
         }
     }
 
+    @Override
+    public List<Appointment> findByDate(LocalDate date) {
+        String sql = SELECT_BASE
+                + "WHERE a.appointment_date = ? ORDER BY a.appointment_time";
+        try (Connection conn = DBConnectionManager.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setObject(1, date);
+            try (ResultSet rs = stmt.executeQuery()) {
+                List<Appointment> appointments = new ArrayList<>();
+                while (rs.next()) {
+                    appointments.add(mapRow(rs));
+                }
+                return appointments;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find appointments on " + date, e);
+        }
+    }
+
     /**
      * Test 1 of the three-test availability check (decision 24): does the
      * requested [time, time + durationMinutes) window overlap any

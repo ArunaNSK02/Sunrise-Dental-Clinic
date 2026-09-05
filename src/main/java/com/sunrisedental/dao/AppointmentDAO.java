@@ -21,6 +21,9 @@ public interface AppointmentDAO {
 
     List<Appointment> findByDentistAndDate(int dentistId, LocalDate date);
 
+    /** Every dentist's appointments on the given date — the dashboard's "Today's Schedule" widget. */
+    List<Appointment> findByDate(LocalDate date);
+
     /**
      * Existing-appointment clash test — test 1 of the three-test
      * availability check (decision 24). {@code durationMinutes} is the

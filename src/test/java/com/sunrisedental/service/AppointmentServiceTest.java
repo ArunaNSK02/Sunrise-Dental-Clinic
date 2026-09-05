@@ -355,6 +355,17 @@ class AppointmentServiceTest {
         }
 
         @Override
+        public List<Appointment> findByDate(LocalDate date) {
+            List<Appointment> result = new ArrayList<>();
+            for (Appointment appointment : byNumber.values()) {
+                if (appointment.getDate().equals(date)) {
+                    result.add(appointment);
+                }
+            }
+            return result;
+        }
+
+        @Override
         public boolean hasClash(int dentistId, LocalDate date, LocalTime time, int durationMinutes,
                                  int excludeAppointmentNumber) {
             lastHasClashExclude = excludeAppointmentNumber;

@@ -24,8 +24,7 @@ public class ReportsServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        if (!Boolean.TRUE.equals(req.getSession().getAttribute("isAdmin"))) {
-            resp.sendRedirect(req.getContextPath() + "/dashboard");
+        if (!RoleGuard.requireAdmin(req, resp)) {
             return;
         }
 

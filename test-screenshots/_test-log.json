@@ -1,0 +1,238 @@
+[
+  {
+    "id": 1,
+    "area": "auth",
+    "description": "Landing page loads with CSS applied (no unstyled-HTML regression)"
+  },
+  {
+    "id": 2,
+    "area": "auth",
+    "description": "Login page reachable from landing page link"
+  },
+  {
+    "id": 3,
+    "area": "auth",
+    "description": "AuthenticationFilter blocks an unauthenticated request to a protected URL",
+    "redirectedToLogin": true,
+    "finalUrl": "http://localhost:8080/sunrise-dental-clinic/login"
+  },
+  {
+    "id": 4,
+    "area": "auth",
+    "description": "Client-side required-field validation on login form (no request sent)"
+  },
+  {
+    "id": 5,
+    "area": "auth",
+    "description": "Server rejects a wrong password with a generic error (does not reveal which field was wrong)",
+    "messageShown": "Invalid username or password."
+  },
+  {
+    "id": 6,
+    "area": "dashboard",
+    "description": "Receptionist sees clinic-wide schedule + Register New Appointment action"
+  },
+  {
+    "id": 7,
+    "area": "register",
+    "description": "Register form renders with dentist/treatment dropdowns populated from DB"
+  },
+  {
+    "id": 8,
+    "area": "register",
+    "description": "Server-side validation rejects a fully blank submission even without browser required attrs",
+    "messageShown": "Patient name, address and contact number are all required."
+  },
+  {
+    "id": 9,
+    "area": "register",
+    "description": "Contact number format validated against real Sri Lankan mobile pattern (07XXXXXXXX / +947XXXXXXXX)",
+    "messageShown": "Contact number must be a valid Sri Lankan number, e.g. 0771234567 or +94771234567."
+  },
+  {
+    "id": 10,
+    "area": "register",
+    "description": "Past-dated appointments are rejected — cannot book into the past",
+    "messageShown": "Appointment date cannot be in the past."
+  },
+  {
+    "id": 11,
+    "area": "register",
+    "description": "Availability check blocks a double-booking against an already-scheduled slot for the same dentist",
+    "messageShown": "Dr. Dr. Amaya Silva is not available on 2026-09-06 at 10:00 — please choose a different slot."
+  },
+  {
+    "id": 12,
+    "area": "register",
+    "description": "A valid, non-clashing booking succeeds and redirects to Display Appointment Details (POST-redirect-GET)",
+    "newApptNumber": "317",
+    "redirectedTo": "http://localhost:8080/sunrise-dental-clinic/appointments?number=317"
+  },
+  {
+    "id": 13,
+    "area": "search",
+    "description": "Search-by-number finds and displays a pre-existing appointment"
+  },
+  {
+    "id": 14,
+    "area": "search",
+    "description": "Search-by-number reports a clean not-found message for an unknown appointment number"
+  },
+  {
+    "id": 15,
+    "area": "bill",
+    "description": "Viewing the bill for an already-billed appointment returns the existing stored total (fn_bill_total-computed)"
+  },
+  {
+    "id": 16,
+    "area": "bill",
+    "description": "Requesting a bill for an unbilled appointment generates one (treatment cost + clinic consultation fee)"
+  },
+  {
+    "id": 17,
+    "area": "manage",
+    "description": "Manage-appointment lookup form renders with no appointment yet selected"
+  },
+  {
+    "id": 18,
+    "area": "manage",
+    "description": "Cancel action updates status to CANCELLED and records the change reason",
+    "messageShown": "Appointment cancelled."
+  },
+  {
+    "id": 19,
+    "area": "manage",
+    "description": "Dentist-caused delay cascades automatically to every later appointment that day for the same dentist",
+    "messageShown": "Dentist delay recorded — 2 appointment(s) updated."
+  },
+  {
+    "id": 20,
+    "area": "manage",
+    "description": "Patient-caused delay with WAIT decision cascades the rest of the day, same as a dentist delay",
+    "messageShown": "Patient delay recorded (waiting) — the rest of the dentist's day has shifted too."
+  },
+  {
+    "id": 21,
+    "area": "manage",
+    "description": "Patient-caused delay with SKIP decision cancels the slot instead of cascading",
+    "messageShown": "Patient skipped — appointment cancelled. Reschedule below once a new slot is agreed."
+  },
+  {
+    "id": 22,
+    "area": "manage",
+    "description": "Reschedule moves an appointment to a new slot, re-validated with the same availability rules as a fresh booking",
+    "messageShown": "Appointment rescheduled to 2026-12-09 at 10:30."
+  },
+  {
+    "id": 23,
+    "area": "notifications",
+    "description": "Booking sends a notification and is logged to the audit trail; a delay recorded on the same appointment does NOT (gap found during this test, not fixed)",
+    "notificationRowsShown": 1
+  },
+  {
+    "id": 24,
+    "area": "help",
+    "description": "Help page renders full step-by-step guide"
+  },
+  {
+    "id": 25,
+    "area": "auth",
+    "description": "Logout invalidates the session and returns to the login page"
+  },
+  {
+    "id": 26,
+    "area": "dashboard",
+    "description": "Administrator sees every nav item (Register/Search/Bill/Manage/Availability/Staff/Reports/Help)"
+  },
+  {
+    "id": 27,
+    "area": "staff",
+    "description": "Staff list shows all seeded accounts with role"
+  },
+  {
+    "id": 28,
+    "area": "staff",
+    "description": "Server-side validation enforces a minimum password length when adding staff",
+    "messageShown": "Password must be at least 6 characters.",
+    "staffRowsShownAfter": 5
+  },
+  {
+    "id": 29,
+    "area": "staff",
+    "description": "A valid new staff account is created and immediately listed",
+    "messageShown": null
+  },
+  {
+    "id": 30,
+    "area": "staff",
+    "description": "Removing a still-referenced staff account (a dentist with appointments) is safely rejected, not silently allowed or mislabeled",
+    "messageShown": "Could not remove this account — it may still be referenced elsewhere (e.g. a dentist with existing appointments).",
+    "perereaStillPresent": true
+  },
+  {
+    "id": 31,
+    "area": "staff",
+    "description": "Staff removal works and is confirmed before submitting (JS confirm dialog)",
+    "messageShown": null,
+    "staffStillPresent": false
+  },
+  {
+    "id": 32,
+    "area": "settings",
+    "description": "Administrator sees a picker across all dentists (a Dentist skips straight to their own record)"
+  },
+  {
+    "id": 33,
+    "area": "settings",
+    "description": "Administrator can change any dentist's daily appointment limit"
+  },
+  {
+    "id": 34,
+    "area": "settings",
+    "description": "Administrator can add an unavailable period on behalf of a dentist, shown in the table below"
+  },
+  {
+    "id": 35,
+    "area": "reports",
+    "description": "Reports page shows real aggregated figures from the database (including a stored-procedure call)"
+  },
+  {
+    "id": 36,
+    "area": "dashboard",
+    "description": "Dentist dashboard is scoped to their own schedule and hides Register/Search/Bill in the nav"
+  },
+  {
+    "id": 37,
+    "area": "security",
+    "description": "RoleGuard blocks a Dentist from Register New Appointment even via a direct URL, not just a hidden nav link",
+    "finalUrl": "http://localhost:8080/sunrise-dental-clinic/dashboard",
+    "blocked": true
+  },
+  {
+    "id": 38,
+    "area": "security",
+    "description": "RoleGuard blocks a Dentist from Calculate & Print Bill even via a direct URL",
+    "finalUrl": "http://localhost:8080/sunrise-dental-clinic/dashboard",
+    "blocked": true
+  },
+  {
+    "id": 39,
+    "area": "security",
+    "description": "A Dentist can view/act on their own appointment; the Cancel fieldset is hidden and the delay form skips the who-picker"
+  },
+  {
+    "id": 40,
+    "area": "security",
+    "description": "A Dentist cannot view or act on another dentist's appointment — reported as not-found to avoid confirming the number exists"
+  },
+  {
+    "id": 41,
+    "area": "settings",
+    "description": "A Dentist manages only their own availability — dentistId comes from the session, never a request parameter"
+  },
+  {
+    "id": 42,
+    "area": "auth",
+    "description": "Dentist logout returns to the login page, ending the session"
+  }
+]
